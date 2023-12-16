@@ -4,13 +4,14 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.types import callback_query
 from aiogram.utils import executor
 from aiogram import types
-
 from config import Config, load_config
+import requests
+import time
+
 
 config: Config = load_config()
 PHOTO_FOLDER = 'photos'
-for admin_id in config.tg_bot.admin_ids:
-    ADMIN_ID = admin_id
+
 bot: Bot = Bot(token=config.tg_bot.token, parse_mode='HTML')
 dp: Dispatcher = Dispatcher(bot)
 
@@ -87,7 +88,7 @@ async def process_callback_restart_bot(callback_query: types.CallbackQuery):
     await bot.send_message(callback_query.from_user.id, "Бот перезапущен. Нажмите /start для начала работы ⚛")
 
 
-@dp.message_handler(lambda message: message.from_user.id == ADMIN_ID, commands=['admin'])
+@dp.message_handler(lambda message: message.from_user.id in config.tg_bot.admin_ids, commands=['admin'])
 async def cmd_admin(message: types.Message):
     keyboard = types.InlineKeyboardMarkup()
     button_1 = types.InlineKeyboardButton(text='Добавить карту 🪄', callback_data='add_photo')
@@ -103,7 +104,7 @@ async def process_callback_add_photo(callback_query: types.CallbackQuery):
     await bot.send_message(callback_query.from_user.id, "Отправьте мне карту, которую вы хотите добавить")
 
 
-@dp.message_handler(lambda message: message.from_user.id == ADMIN_ID, content_types=['photo'])
+@dp.message_handler(lambda message: message.from_user.id in config.tg_bot.admin_ids, content_types=['photo'])
 async def handle_docs_photo(message):
     file_info = await bot.get_file(message.photo[-1].file_id)
     if file_info.file_path:
@@ -134,4 +135,3 @@ async def handle_docs_photo(message):
 
 if __name__ == '__main__':
     executor.start_polling(dp, skip_updates=True)
-
